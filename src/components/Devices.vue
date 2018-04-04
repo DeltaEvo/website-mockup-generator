@@ -1,33 +1,40 @@
 <template>
   <div>
-	<vue-draggable-resizable
-		v-for="(device,i) in devices"
-		:key="i"
+		<vue-draggable-resizable
+			v-for="(device,i) in devices"
+			:key="i"
 
-		:handles="['ml','mr']"
-		:w="device.width"
-		:x="devices.slice(0,i).reduce((c,v) => c + v.width, 0)"
-		:maxw="device.image_width"
-		@resizing="(x,y,width,height) => device.width = Math.min(width, device.image_width)"
-		class="device-container"
-	>
-		<div class="device"
-			:data-device="device.name"
-			:data-orientation="device.orientation"
-			:data-color="device.color"
+			:handles="['ml','mr']"
+			:w="device.width"
+			:maxw="device.image_width"
+			@resizing="(x,y,width,height) => device.width = Math.min(width, device.image_width)"
+			class="device-container"
 		>
-			<div class="screen">
-				<iframe
-					src="https://popcorn.moe/"
-					class="screen-frame"
-					frameBorder="0"
-					:style="{ transform: `scale(${device.width/device.image_width})` }"
-					:width="device.screen_width"
-					:height="device.screen_height"
-				/>
+			<div class="device"
+				:data-device="device.name"
+				:data-orientation="device.orientation"
+				:data-color="device.color"
+			>
+				<div class="screen">
+					<iframe
+						:src="url"
+						class="screen-frame"
+						frameBorder="0"
+						:style="{ transform: `scale(${(device.width * device.screen_width/device.image_width)/device.viewport.w})` }"
+						:width="device.viewport.w"
+						:height="device.viewport.h"
+					/>
+				</div>
 			</div>
-		</div>
-	</vue-draggable-resizable>
+		</vue-draggable-resizable>
+		<button @click="devicesList = !devicesList">
+			Add Device
+		</button>
+		<ul v-if="devicesList">
+			<li v-for="(device, i) in allDevices" :key="i" @click="addDevice(device)">
+				{{ device.name }} - {{ device.orientation }} - {{ device.color }} - {{ device.variant }}
+			</li>
+		</ul>
   </div>
 </template>
 
@@ -35,22 +42,22 @@
 import "html5-device-mockups"
 import devices from "./devices.js"
 import VueDraggableResizable from "./VueDraggableResizable"
-console.log(devices)
 
 export default {
 	data() {
 		return {
-			devices: [
-				Object.assign({}, devices.find(({ name }) => name === "iPhone5"), {
-					width: 300
-				}),
-				Object.assign({}, devices.find(({ name }) => name === "Chromebook"), {
-					width: 1000
-				}),
-				Object.assign({}, devices.find(({ name }) => name === "Surface"), {
-					width: 600
-				})
-			]
+			devices: [],
+			url: "https://popcorn.moe/",
+			devicesList: false,
+			allDevices: devices
+		}
+	},
+	methods: {
+		addDevice(device) {
+			this.devicesList = false;
+			this.devices.push(Object.assign({}, device, {
+				width: device.viewport.w/2
+			}))
 		}
 	},
 	components: {
@@ -65,6 +72,7 @@ export default {
 	}
 
 	.device .screen {
-    	pointer-events: inherit;
+			pointer-events: inherit;
+			overflow: hidden;
 	}
 </style>
